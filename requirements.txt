@@ -6,3 +6,6 @@ azure-functions
 requests
 python-dotenv
 jinja2
+azure-identity
+azure-data-tables
+matplotlib
