@@ -4,7 +4,7 @@ import io
 import base64
 from datetime import datetime
 from azure.data.tables import TableClient
-from azure.identity import DefaultAzureCredential
+from azure.identity import ClientSecretCredential
 
 def converter_data_string(data_str):
     """Converte string de data para objeto datetime, tentando vários formatos"""
@@ -51,7 +51,12 @@ def gerar_grafico_multicategorias():
     if hasattr(gerar_grafico_multicategorias, '_occupied_positions'):
         gerar_grafico_multicategorias._occupied_positions = {}
     
-    credential = DefaultAzureCredential()
+    import os
+    credential = ClientSecretCredential(
+        tenant_id=os.getenv("TENANT_ID"),
+        client_id=os.getenv("CLIENT_ID"),
+        client_secret=os.getenv("CLIENT_SECRET")
+    )
     table_url = "https://storagescores.table.core.windows.net"
     table_client = TableClient(endpoint=table_url, table_name="AdvisorScores", credential=credential)
 

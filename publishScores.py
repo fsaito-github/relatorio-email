@@ -5,7 +5,7 @@ import os
 import requests
 
 from azure.data.tables import TableClient
-from azure.identity import DefaultAzureCredential
+from azure.identity import ClientSecretCredential
 from azure.core.exceptions import ResourceNotFoundError
 
 
@@ -60,7 +60,11 @@ def get_scores(token):
 
 
 def registrar_scores_em_tabela(scores):
-    credential = DefaultAzureCredential()
+    credential = ClientSecretCredential(
+        tenant_id=TENANT_ID,
+        client_id=CLIENT_ID,
+        client_secret=CLIENT_SECRET
+    )
     table_url = f"https://storagescores.table.core.windows.net"
     table_client = TableClient(endpoint=table_url, table_name="AdvisorScores", credential=credential)
 
