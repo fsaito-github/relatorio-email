@@ -1,0 +1,14 @@
+# Arquivo de exemplo para configuração das credenciais
+# Crie um arquivo .env com estas variáveis e preencha com seus valores reais
+
+# Azure AD Tenant ID
+TENANT_ID=seu-tenant-id-aqui
+
+# Service Principal Client ID
+CLIENT_ID=seu-client-id-aqui
+
+# Service Principal Client Secret
+CLIENT_SECRET=seu-client-secret-aqui
+
+# Azure Subscription ID
+SUBSCRIPTION_ID=sua-subscription-id-aqui

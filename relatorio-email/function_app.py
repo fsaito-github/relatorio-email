@@ -627,6 +627,57 @@ def generate_html(recommendations_by_category, recommendations_summary, service_
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 
+@app.route(route="testConnection")
+def testConnection(req: func.HttpRequest) -> func.HttpResponse:
+    """Função para testar a conexão com Azure Storage"""
+    logging.info('Testando conexão com Azure Storage...')
+    
+    try:
+        from azure.data.tables import TableClient
+        from azure.identity import ClientSecretCredential
+        from azure.core.exceptions import ClientAuthenticationError, ResourceNotFoundError
+        
+        # Verificar variáveis de ambiente
+        if not all([TENANT_ID, CLIENT_ID, CLIENT_SECRET]):
+            return func.HttpResponse(
+                "Variáveis de ambiente não configuradas",
+                status_code=500
+            )
+        
+        # Testar autenticação
+        credential = ClientSecretCredential(
+            tenant_id=TENANT_ID,
+            client_id=CLIENT_ID,
+            client_secret=CLIENT_SECRET
+        )
+        
+        table_url = "https://storagescores.table.core.windows.net"
+        table_client = TableClient(endpoint=table_url, table_name="AdvisorScores", credential=credential)
+        
+        # Testar consulta
+        test_entities = list(table_client.query_entities("PartitionKey eq 'Security'", select=["PartitionKey"], limit=1))
+        
+        return func.HttpResponse(
+            f"Conexão com Azure Storage bem-sucedida! Encontradas {len(test_entities)} entidades de teste.",
+            status_code=200
+        )
+        
+    except ClientAuthenticationError as e:
+        return func.HttpResponse(
+            f"Erro de autenticação: {e}",
+            status_code=401
+        )
+    except ResourceNotFoundError as e:
+        return func.HttpResponse(
+            f"Tabela não encontrada: {e}",
+            status_code=404
+        )
+    except Exception as e:
+        return func.HttpResponse(
+            f"Erro inesperado: {e}",
+            status_code=500
+        )
+
 @app.route(route="getDataAdvisor")
 def getDataAdvisor(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Azure Function getDataAdvisor foi acionada.')
@@ -694,10 +745,16 @@ def getDataAdvisor(req: func.HttpRequest) -> func.HttpResponse:
             mimetype="text/html",
             status_code=200
         )
+    except ValueError as e:
+        logging.error(f"Erro de configuração: {e}")
+        return func.HttpResponse(
+            f"Erro de configuração: {e}",
+            status_code=500
+        )
     except Exception as e:
         logging.error(f"Erro ao gerar relatório: {e}")
         return func.HttpResponse(
-            "Erro ao obter dados.",
+            f"Erro ao obter dados: {e}",
             status_code=500
         )
 import publishScores

@@ -52,13 +52,34 @@ def gerar_grafico_multicategorias():
         gerar_grafico_multicategorias._occupied_positions = {}
     
     import os
-    credential = ClientSecretCredential(
-        tenant_id=os.getenv("TENANT_ID"),
-        client_id=os.getenv("CLIENT_ID"),
-        client_secret=os.getenv("CLIENT_SECRET")
-    )
-    table_url = "https://storagescores.table.core.windows.net"
-    table_client = TableClient(endpoint=table_url, table_name="AdvisorScores", credential=credential)
+    from azure.core.exceptions import ClientAuthenticationError, ResourceNotFoundError
+    
+    # Verificar se as variáveis de ambiente estão configuradas
+    tenant_id = os.getenv("TENANT_ID")
+    client_id = os.getenv("CLIENT_ID")
+    client_secret = os.getenv("CLIENT_SECRET")
+    
+    if not all([tenant_id, client_id, client_secret]):
+        raise ValueError("Variáveis de ambiente TENANT_ID, CLIENT_ID ou CLIENT_SECRET não estão configuradas")
+    
+    try:
+        credential = ClientSecretCredential(
+            tenant_id=tenant_id,
+            client_id=client_id,
+            client_secret=client_secret
+        )
+        table_url = "https://storagescores.table.core.windows.net"
+        table_client = TableClient(endpoint=table_url, table_name="AdvisorScores", credential=credential)
+        
+        # Testar a conexão fazendo uma consulta simples
+        test_entities = list(table_client.query_entities("PartitionKey eq 'Security'", select=["PartitionKey"], limit=1))
+        
+    except ClientAuthenticationError as e:
+        raise ValueError(f"Falha na autenticação com Azure Storage: {e}")
+    except ResourceNotFoundError as e:
+        raise ValueError(f"Tabela 'AdvisorScores' não encontrada: {e}")
+    except Exception as e:
+        raise ValueError(f"Erro ao conectar com Azure Storage: {e}")
 
     categorias = ["Cost", "Security", "HighAvailability", "OperationalExcellence", "Performance"]
     # Paleta de cores
